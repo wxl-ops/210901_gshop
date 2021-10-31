@@ -4,40 +4,42 @@
       <div class="login_header">
         <h2 class="login_logo">硅谷外卖</h2>
         <div class="login_header_title">
-          <a href="javascript:;" class="on">短信登录</a>
-          <a href="javascript:;">密码登录</a>
+          <a href="javascript:;" :class="{on:isOn}" @click="isOn = true">短信登录</a>
+          <a href="javascript:;" :class="{on:!isOn}" @click="isOn = false">密码登录</a>
         </div>
       </div>
       <div class="login_content">
-        <form>
-          <div class="on">
+        <form @submit.prevent="login">
+          <div :class="{on:isOn}">
             <section class="login_message">
-              <input type="tel" maxlength="11" placeholder="手机号">
-              <button disabled="disabled" class="get_verification">获取验证码</button>
+              <input type="tel" maxlength="11" placeholder="手机号" v-model="phone">
+              <button :disabled="!rightPhone" class="get_verification"
+                      :class="{right_phone:rightPhone}" @click.prevent="getCode">{{isTime>0 ? `已发送(${isTime})`:'获取验证码'}}</button>
             </section>
             <section class="login_verification">
-              <input type="tel" maxlength="8" placeholder="验证码">
+              <input type="tel" maxlength="8" placeholder="验证码" v-model="code">
             </section>
             <section class="login_hint">
               温馨提示：未注册硅谷外卖帐号的手机号，登录时将自动注册，且代表已同意
               <a href="javascript:;">《用户服务协议》</a>
             </section>
           </div>
-          <div>
+          <div :class="{on:!isOn}">
             <section>
               <section class="login_message">
-                <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名">
+                <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名" v-model="name">
               </section>
               <section class="login_verification">
-                <input type="tel" maxlength="8" placeholder="密码">
-                <div class="switch_button off">
-                  <div class="switch_circle"></div>
-                  <span class="switch_text">...</span>
+                <input type="password" maxlength="8" placeholder="密码" v-show="!showPwd" v-model="pwd">
+                <input type="text" maxlength="8" placeholder="密码" v-show="showPwd" v-model="pwd">
+                <div class="switch_button" :class="showPwd ? 'on':'off'"  @click="showPwd=!showPwd">
+                  <div class="switch_circle" :class="{right:showPwd}"></div>
+                  <span class="switch_text">{{showPwd ? 'abc':'...'}}</span>
                 </div>
               </section>
               <section class="login_message">
-                <input type="text" maxlength="11" placeholder="验证码">
-                <img class="get_verification" src="./images/captcha.svg" alt="captcha">
+                <input type="text" maxlength="11" placeholder="验证码" v-model="captcha">
+                <img class="get_verification" src="http://localhost:4000/captcha" alt="captcha" @click="changeCaptcha" ref="captcha">
               </section>
             </section>
           </div>
@@ -49,12 +51,99 @@
         <i class="iconfont icon-jiantou2"></i>
       </a>
     </div>
+    <AlertTip :alertText="alertText" v-show="alertShow" @closeTip="closeTip"/>
   </section>
 </template>
 
 <script>
+  import AlertTip from '../../components/AlertTip/AlertTip'
+  import {reqPwdLogin, reqSendCode, reqSmsLogin, reqUserInfo} from '../../api'
+
   export default {
     name: 'Login',
+    components: {AlertTip},
+    data(){
+      return {
+        isOn:false,
+        showPwd:false,
+        isTime:0,
+        phone:'',
+        code:'',
+        name:'',
+        pwd:'',
+        captcha:'',
+        alertText:'',
+        alertShow:false
+      }
+    },
+    computed:{
+      rightPhone(){
+        return /^1\d{10}$/.test(this.phone)
+      },
+
+    },
+    methods:{
+      //动态获取验证码，取巧，重新设置src
+      changeCaptcha(){
+        this.$refs.captcha.src = `http://localhost:4000/captcha?${Date.now()}`
+      },
+      //手机号登录，获取验证码
+      async getCode(){
+        let codeObj = await reqSendCode(this.phone)
+        if (!this.isTime){
+          this.isTime = 30
+          let timer = setInterval(()=>{
+            this.isTime--
+            if (this.isTime<=0 || codeObj.code){
+              clearInterval(timer)
+              //感觉如果不加初始值可能是负的
+              this.isTime = 0
+              this.showAlert('手机号错误')
+            }
+          },1000)
+        }
+      },
+      //提取出来的方法，用于显示提示框与提示框信息
+      showAlert(alertText) {
+        this.alertShow = true
+        this.alertText = alertText
+      },
+      //登录的审核
+      async login(){
+        let codeObj
+        if(this.isOn){
+          if(!this.rightPhone){
+            this.showAlert('请输入11位号码')
+          }else if(!/^\d{6}$/.test(this.code)) {
+            this.showAlert('请输入6位数字验证码')
+          }else {
+            codeObj = await reqSmsLogin(this.phone,this.code)
+          }
+        }else {
+          if(!this.name){
+            this.showAlert('请输入用户名')
+          }else if(!this.pwd){
+            this.showAlert('请输入密码')
+          }else if(!this.captcha){
+            this.showAlert('请输入正确的验证码')
+          }else {
+            const {name, pwd, captcha} = this
+            codeObj = await reqPwdLogin({name, pwd, captcha})
+          }
+        }
+        if (!codeObj.code){
+          this.$store.commit('login/RECORD_USER',codeObj.data)
+          await this.$router.replace('/profile')
+        }else {
+          this.showAlert('有错误')
+        }
+      },
+      //这是组件中的自定义事件，用于关闭提示框
+      closeTip(){
+        this.alertText = ''
+        this.alertShow = false
+      }
+    }
   }
 </script>
 
@@ -119,6 +208,8 @@
                 color #ccc
                 font-size 14px
                 background transparent
+                &.right_phone
+                  color black
             .login_verification
               position relative
               margin-top 16px
@@ -147,7 +238,6 @@
                 &.on
                   background #02a774
                 >.switch_circle
-                  //transform translateX(27px)
                   position absolute
                   top -1px
                   left -1px
@@ -158,6 +248,8 @@
                   background #fff
                   box-shadow 0 2px 4px 0 rgba(0,0,0,.1)
                   transition transform .3s
+                  &.right
+                    transform translateX(27px)
             .login_hint
               margin-top 12px
               color #999

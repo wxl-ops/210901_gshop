@@ -1,6 +1,7 @@
 <template>
   <div class="footer_guide border-1px">
-    <router-link replace class="guide_item" :class="{on:'/msite' === $route.path}" to="/msite">
+    <router-link replace class="guide_item" active-class="on"  to="/msite">
+<!--      :class="{on:'/msite' === $route.path}"-->
     <span class="item_icon">
       <i class="iconfont icon-waimai"></i>
     </span>
