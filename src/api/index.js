@@ -19,5 +19,10 @@ export const reqUserInfo = () => ajax(BASE_URL+'/userinfo')
 //登出
 export const reqLogout = () => ajax(BASE_URL+'/logout')
 
+//请求mock数据,因为是mock数据,所以url可以自己随意制定
+export const reqShopInfo = () => ajax('/info');
+export const reqShopGoods = () => ajax('/goods');
+export const reqShopRatings = () => ajax('/ratings');
+
 
 

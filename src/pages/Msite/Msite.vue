@@ -2,9 +2,9 @@
   <section class="msite">
     <!--首页头部-->
     <HeaderTop :title="address.name">
-      <router-link class="header_search" slot="left" to='/search'>
+      <a class="header_search" slot="left" @click='$router.replace("/search")'>
         <i class="iconfont icon-sousuo"></i>
-      </router-link>
+      </a>
       <span class="header_login" slot="right">
         <router-link class="header_login_text" v-if="!userInfo._id" to="/login">登录|注册</router-link>
         <router-link class="header_login_text" v-else to="/userinfo">
@@ -95,10 +95,11 @@
   }
 </script>
 
-<style lang="stylus" rel="stylesheet/stylus">
+<style lang="stylus" rel="stylesheet/stylus" scoped>
   @import "../../common/stylus/mixins.styl"
   .msite  //首页
     width 100%
+    overflow hidden
     .msite_nav
       bottom-border-1px(#e4e4e4)
       margin-top 45px
