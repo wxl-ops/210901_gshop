@@ -76,7 +76,7 @@
       }
     },
     watch:{
-      foodCategory(val){
+      foodCategory(){
         this.$nextTick(()=>{
           new Swiper('.swiper-container',{
             loop: true,
