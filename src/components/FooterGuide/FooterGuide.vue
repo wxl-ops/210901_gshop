@@ -33,7 +33,7 @@
     name: 'FooterGuide',
     methods:{
       getTo(path){
-        this.$router.replace(path)
+        this.$router.replace(path).catch(err => {console.log("出错了")})
       }
     }
   }

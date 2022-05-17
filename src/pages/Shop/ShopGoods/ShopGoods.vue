@@ -107,6 +107,7 @@
         //使用这个滚动库时，注意使用nextTick，否则会报错，他需要列表中的数据。
         //使用这个库的方式，new+对应类名
         new BScroll('.menu-wrapper',{
+          scrollY:true,
           click:true
         });
         this.scrollMove = new BScroll('.foods-wrapper',{

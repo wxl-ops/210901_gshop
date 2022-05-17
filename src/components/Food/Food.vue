@@ -1,28 +1,30 @@
 <template>
   <div class="food" v-show="isShow">
-    <div class="food-content">
-      <div class="image-header">
-        <img :src="food.image">
-        <p class="foodpanel-desc">{{food.info}}</p>
-        <div class="back" @click="changeShow">
-          <i class="iconfont icon-arrow_left"></i>
+      <transition-group name="move">
+        <div class="food-content" key="1">
+          <div class="image-header">
+            <img v-lazy="food.image">
+            <p class="foodpanel-desc">{{food.info}}</p>
+            <div class="back" @click="changeShow">
+              <i class="iconfont icon-arrow_left"></i>
+            </div>
+          </div>
+          <div class="content">
+            <h1 class="title">{{food.name}}</h1>
+            <div class="detail">
+              <span class="sell-count">月售 {{food.sellCount}}份</span>
+              <span class="rating">好评率 {{food.rating}}%</span>
+            </div>
+            <div class="price">
+              <span class="now">￥{{food.price}}</span>
+              <span class="old" style="display: none;">￥{{food.oldPrice}}</span>
+            </div>
+            <div class="cartcontrol-wrapper"><CartControl :food="food"/></div>
+          </div>
         </div>
-      </div>
-      <div class="content">
-        <h1 class="title">{{food.name}}</h1>
-        <div class="detail">
-          <span class="sell-count">月售 {{food.sellCount}}份</span>
-          <span class="rating">好评率 {{food.rating}}%</span>
-        </div>
-        <div class="price">
-          <span class="now">￥{{food.price}}</span>
-          <span class="old" style="display: none;">￥{{food.oldPrice}}</span>
-        </div>
-        <div class="cartcontrol-wrapper"><CartControl :food="food"/></div>
-      </div>
+        <div class="food-cover" @click="changeShow" key="2"></div>
+    </transition-group>
     </div>
-    <div class="food-cover" @click="changeShow"></div>
-  </div>
 </template>
 <script>
   import {mapState} from 'vuex'
@@ -56,10 +58,6 @@
     bottom: 48px
     z-index: 101
     width: 100%
-    &.fade-enter-active, &.fade-leave-active
-      transition opacity .5s
-    &.fade-enter, &.fade-leave-to
-      opacity 0
     .food-content
       position absolute
       left 50%
@@ -70,6 +68,10 @@
       z-index 66
       background #fff
       border-radius 5px
+      &.move-enter,&.move-leave-to
+        opacity 0
+      &.move-enter-active,&.move-leave-active
+        transition opacity .5s
       .image-header
         position: relative
         width: 100%
@@ -159,5 +161,8 @@
       left 0
       z-index 55
       background-color rgba(0, 0, 0, 0.5)
-
+      &.move-enter,&.move-leave-to
+        opacity 0
+      &.move-enter-active,&.move-leave-active
+        transition opacity .5s
 </style>

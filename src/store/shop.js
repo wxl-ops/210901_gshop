@@ -4,10 +4,11 @@ export default {
   namespaced:true,
   actions:{
     //获取店铺信息
-    async getInfo({commit}){
+    async getInfo({commit},cb){
       const result = await reqShopInfo();
       if(!result.code){
         commit('RECEIVE_SHOP_INFO',result.data)
+        cb && cb()
       }
     },
     //获取食品信息
@@ -35,12 +36,23 @@ export default {
     }
   },
   mutations:{
+    //清除购物车信息
+    CLEAR_CART(state) {
+      state.foodCount.forEach((item, index)=>{
+        Vue.delete(item,'count')
+        // item.count = 0;
+      })
+      state.foodCount = []
+    },
+    //存商店信息
     RECEIVE_SHOP_INFO(state,shopInfo){
       state.info = shopInfo
     },
+    //存食物信息
     RECEIVE_SHOP_GOODS(state,shopGoods){
       state.goods = shopGoods
     },
+    //存商店评价信息
     RECEIVE_SHOP_RATINGS(state,shopRatings){
       state.ratings = shopRatings
     },
@@ -72,6 +84,9 @@ export default {
     },
     totalPrice(state){
       return state.foodCount.reduce((prePrice,food) => prePrice + food.count*food.price, 0)
+    },
+    totalPleased(state){
+      return state.ratings.reduce((preValue,rating) => preValue + (rating.rateType === 0 ? 1 : 0),0)
     }
   },
   state:{

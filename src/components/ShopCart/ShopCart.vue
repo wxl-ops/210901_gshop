@@ -16,30 +16,32 @@
           <div class="pay" :class="toggleClass">{{toggleText}}</div>
         </div>
       </div>
-      <div class="shopcart-list" v-show="totalCount&&isShow">
-        <div class="list-header">
-          <h1 class="title">购物车</h1>
-          <span class="empty">清空</span>
+      <transition name="move">
+        <div class="shopcart-list" v-show="totalCount&&isShow">
+          <div class="list-header">
+            <h1 class="title">购物车</h1>
+            <span class="empty" @click="clearCart">清空</span>
+          </div>
+          <div class="list-content">
+              <ul>
+                <li class="food" v-for="(food,index) in foodCount" :key="index">
+                  <span class="name">{{food.name}}</span>
+                  <div class="price"><span>￥{{food.price}}</span></div>
+                  <div class="cartcontrol-wrapper">
+                    <div class="cartcontrol">
+                      <CartControl :food = 'food'/>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+          </div>
         </div>
-        <div class="list-content">
-          <ul>
-            <li class="food" v-for="(food,index) in foodCount" :key="index">
-              <span class="name">{{food.name}}</span>
-              <div class="price"><span>￥{{food.price}}</span></div>
-              <div class="cartcontrol-wrapper">
-                <div class="cartcontrol">
-<!--                  <div class="iconfont icon-remove_circle_outline"></div>-->
-<!--                  <div class="cart-count"></div>-->
-<!--                  <div class="iconfont icon-add_circle"></div>-->
-                  <CartControl :food = 'food'/>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
+      </transition>
     </div>
-    <div class="list-mask" v-show="isShow&&totalCount" @click="toggleCart"></div>
+    <transition name="fade">
+      <div class="list-mask" v-show="isShow&&totalCount" @click="toggleCart"></div>
+    </transition>
+
   </div>
 
 </template>
@@ -47,6 +49,8 @@
 <script>
   import {mapState, mapGetters} from 'vuex'
   import CartControl from '../CartControl/CartControl'
+  import BScroll from 'better-scroll'
+  import { MessageBox } from 'mint-ui'
   export default {
     name: 'ShopCart',
     data(){
@@ -85,11 +89,30 @@
       }
     },
     methods:{
+      //清空购物车
+      clearCart() {
+        MessageBox.confirm('确定清空购物车么？').then(action => {
+          this.$store.commit('shop/CLEAR_CART')
+        },()=>{})
+      },
       //点击展示购物车
       toggleCart(){
         //只有当有食物被添加进购物车时才能切换购物车的显示隐藏
         if (this.totalCount){
           this.isShow = !this.isShow
+        }
+        if(this.isShow) {
+          this.$nextTick(()=>{
+            //使列表滑动
+            if (!this.cartScroll){
+              this.cartScroll = new BScroll('.list-content',{
+                click:true
+              })
+            }else {
+              //这里是让滑动自己刷新一下，使得能够滑动，不刷新的话this.cartScroll实例不知道列表东西变多了，能滑动了
+              this.cartScroll.refresh()
+            }
+          })
         }
       }
     }
@@ -206,10 +229,12 @@
       z-index -1
       width 100%
       transform translateY(-100%)
-      &.move-enter-active, &.move-leave-active
-        transition transform .3s
-      &.move-enter, &.move-leave-to
+      &.move-enter,&.move-leave-to
         transform translateY(0)
+      &.move-enter-active,&.move-leave-active
+        transition .3s
+      &.move-enter-to,&.move-leave
+        transform translateY(-100%)
       .list-header
         height 40px
         line-height 40px
@@ -263,8 +288,7 @@
     opacity 1
     background rgba(7, 17, 27, 0.6)
     &.fade-enter-active, &.fade-leave-active
-      transition all 0.5s
+      transition opacity .3s
     &.fade-enter, &.fade-leave-to
       opacity 0
-      background rgba(7, 17, 27, 0)
 </style>
